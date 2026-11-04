@@ -1,0 +1,27 @@
+{
+  "name": "XSTEAM — Fichas de Treino",
+  "short_name": "XSTEAM Treino",
+  "description": "Visualizador de fichas de treino XSTEAM com demanda muscular e uso offline.",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#060807",
+  "theme_color": "#090b0a",
+  "lang": "pt-BR",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "./icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

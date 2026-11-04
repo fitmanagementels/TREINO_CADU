@@ -1,0 +1,1302 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#090b0a" />
+  <meta name="application-name" content="XSTEAM Treino" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="XSTEAM Treino" />
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
+  <title>XSTEAM — Visualizador de Fichas</title>
+  <meta name="xsteam-release" content="2026-11-04-cut-low-v8" />
+  <style>
+    :root {
+      --lime:#dfff2f; --black:#060807; --panel:#101310; --panel2:#171a17;
+      --line:rgba(255,255,255,.11); --white:#f7f8f4; --muted:#9ea59d;
+      --shadow:0 20px 55px rgba(0,0,0,.32);
+    }
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;color:var(--white);min-height:100vh;
+      font-family:Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      background:radial-gradient(circle at 86% 0%,rgba(223,255,47,.13),transparent 23rem),
+                 linear-gradient(180deg,#080a08 0%,#050605 100%);
+    }
+    body::before{
+      content:"";position:fixed;inset:0;pointer-events:none;opacity:.12;
+      background-image:linear-gradient(135deg,transparent 0 48%,rgba(223,255,47,.12) 49% 50%,transparent 51%),
+                       linear-gradient(45deg,transparent 0 48%,rgba(255,255,255,.05) 49% 50%,transparent 51%);
+      background-size:90px 90px;mask-image:linear-gradient(to bottom,black,transparent 70%);
+    }
+    .app{width:min(100%,780px);margin:0 auto;padding-bottom:42px;position:relative}
+    .hero{position:relative;overflow:hidden;min-height:300px;padding:24px 20px 26px;display:flex;flex-direction:column;justify-content:flex-start;border-bottom:1px solid var(--line)}
+    .hero::after{content:"X";position:absolute;right:-28px;bottom:-100px;color:rgba(223,255,47,.08);font-size:330px;line-height:1;font-weight:1000;letter-spacing:-45px;transform:skewX(-10deg)}
+    .brand{display:flex;align-items:center;gap:12px;position:relative;z-index:1}
+    .logo-box{width:64px;height:64px;border-radius:18px;overflow:hidden;box-shadow:0 0 0 1px rgba(223,255,47,.35),0 14px 30px rgba(0,0,0,.35)}
+    .logo-box img{width:100%;height:100%;object-fit:cover;display:block}
+    .wordmark{font-weight:950;letter-spacing:-1.8px;font-size:clamp(24px,8vw,38px);font-style:italic}
+    .hero-copy{position:relative;z-index:1;margin-top:28px}
+    .kicker,.eyebrow{color:var(--lime);font-size:11px;font-weight:900;letter-spacing:2px;text-transform:uppercase}
+    h1{margin:10px 0 10px;font-size:clamp(42px,11vw,70px);line-height:.92;letter-spacing:-4px;text-transform:uppercase}
+    .hero-copy p{margin:0;color:#c6cbc4;font-size:15px;line-height:1.5}
+    .selector-shell{margin:-1px 16px 18px;padding:16px;background:var(--lime);color:var(--black);border-radius:0 0 24px 24px;box-shadow:var(--shadow);position:relative;z-index:4}
+    .selector-shell label{display:block;font-size:9px;font-weight:950;letter-spacing:1.4px;text-transform:uppercase;margin-bottom:8px}
+    .selector-row{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}
+    select{width:100%;border:0;outline:0;border-radius:14px;padding:14px 42px 14px 14px;font:inherit;font-weight:900;background:#0a0c0a;color:white;appearance:none}
+    .time-chip{padding:12px 14px;border:1px solid rgba(0,0,0,.22);border-radius:14px;font-size:11px;font-weight:900;white-space:nowrap}
+    main{padding:0 14px}
+    .section-intro{padding:20px 6px 15px;display:grid;grid-template-columns:minmax(0,auto) minmax(0,1fr);align-items:end;gap:18px}
+    .sheet-heading{min-width:0}
+    .section-intro h2{margin:5px 0 0;font-size:clamp(24px,6vw,34px);line-height:1;letter-spacing:-1.4px;text-transform:uppercase;white-space:nowrap}
+    .week{min-width:0;display:flex;flex-wrap:wrap;justify-content:flex-end;gap:6px;color:var(--muted)}
+    .week-chip{display:inline-flex;align-items:center;min-height:27px;padding:6px 9px;border:1px solid rgba(255,255,255,.08);border-radius:999px;background:rgba(255,255,255,.035);color:#9ea59d;font-size:8px;font-weight:850;letter-spacing:.35px;white-space:nowrap;cursor:pointer;font-family:inherit;appearance:none;-webkit-tap-highlight-color:transparent;transition:border-color .18s ease,background .18s ease,color .18s ease,transform .18s ease}
+    .week-chip:hover{border-color:rgba(223,255,47,.28);color:#d8ddc2}
+    .week-chip:active{transform:scale(.98)}
+    .week-chip:focus-visible{outline:2px solid var(--lime);outline-offset:2px}
+    .week-chip.active{border-color:rgba(223,255,47,.42);background:rgba(223,255,47,.10);color:var(--lime)}
+    .demand-card{margin-bottom:22px;border:1px solid rgba(223,255,47,.24);border-radius:28px;overflow:hidden;background:linear-gradient(160deg,rgba(28,33,26,.98),rgba(9,11,9,.99));box-shadow:var(--shadow)}
+    .demand-head{padding:23px 22px 18px;border-bottom:1px solid var(--line);background:linear-gradient(130deg,rgba(223,255,47,.13),transparent 55%)}
+    .demand-head h2{margin:7px 0 5px;font-size:31px;letter-spacing:-1.6px;text-transform:uppercase}
+    .demand-head p{margin:0;color:var(--muted);font-size:12px;line-height:1.5}
+    .demand-list{padding:10px 18px 20px}
+    .demand-row{padding:11px 0}
+    .demand-topline{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-size:13px}
+    .demand-topline span{font-weight:800}
+    .demand-topline strong{color:var(--lime);font-size:13px}
+    .demand-track{height:9px;border-radius:999px;background:rgba(255,255,255,.07);overflow:hidden}
+    .demand-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--lime),#efff91);box-shadow:0 0 18px rgba(223,255,47,.25)}
+    .method{padding:13px 18px 18px;color:#747b73;font-size:10px;line-height:1.5;border-top:1px solid var(--line)}
+    .workout-card{margin:0 0 14px;border:1px solid var(--line);background:linear-gradient(160deg,rgba(25,29,25,.97),rgba(10,12,10,.99));border-radius:28px;overflow:hidden;box-shadow:var(--shadow);scroll-margin-top:14px}
+    .workout-header{display:flex;justify-content:space-between;align-items:stretch;gap:14px;padding:0;background:linear-gradient(130deg,rgba(223,255,47,.11),transparent 52%);border-bottom:1px solid var(--line);transition:background .18s ease,border-color .18s ease}
+    .workout-card.collapsed .workout-header{border-bottom-color:transparent}
+    .workout-toggle{min-width:0;flex:1;display:flex;align-items:center;justify-content:space-between;gap:14px;padding:22px 0 20px 22px;border:0;background:transparent;color:inherit;text-align:left;font:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
+    .workout-toggle-copy{min-width:0}
+    .workout-header h2{margin:7px 0 5px;font-size:clamp(27px,8vw,40px);line-height:.95;letter-spacing:-1.9px}
+    .workout-header p{margin:0;color:var(--muted);font-size:13px}
+    .workout-chevron{flex:0 0 auto;display:grid;place-items:center;width:30px;height:30px;border:1px solid rgba(255,255,255,.10);border-radius:10px;color:#9ea59d;font-size:18px;line-height:1;transition:transform .2s ease,color .18s ease,border-color .18s ease}
+    .workout-card.expanded .workout-chevron{transform:rotate(180deg);color:var(--lime);border-color:rgba(223,255,47,.34)}
+    .workout-toggle:hover .workout-chevron{color:var(--lime);border-color:rgba(223,255,47,.28)}
+    .workout-toggle:focus-visible{outline:2px solid var(--lime);outline-offset:-5px;border-radius:24px}
+    .count{align-self:center;min-width:54px;height:54px;margin:16px 22px 16px 0;display:grid;place-items:center;border:0;background:var(--lime);color:var(--black);border-radius:17px;font-family:inherit;font-weight:950;font-size:22px;line-height:1;transform:rotate(3deg);cursor:pointer;appearance:none;-webkit-tap-highlight-color:transparent;transition:transform .18s ease,box-shadow .18s ease}
+    .count:hover{transform:rotate(0deg) scale(1.04);box-shadow:0 0 0 4px rgba(223,255,47,.08)}
+    .count:active{transform:rotate(0deg) scale(.97)}
+    .count:focus-visible{outline:2px solid var(--white);outline-offset:3px}
+    .workout-details[hidden]{display:none}
+    .column-labels{display:grid;grid-template-columns:1fr 50px 54px 48px;gap:5px;align-items:center;padding:11px 13px 8px 64px;color:#747b73;font-size:7px;letter-spacing:.8px;font-weight:900;text-align:center}
+    .column-labels span:first-child{text-align:left}
+    .exercise-list{padding:0 8px 10px}
+    .exercise{min-height:88px;display:grid;grid-template-columns:42px minmax(0,1fr) 50px 54px 48px;align-items:center;gap:5px;padding:12px 5px;border-top:1px solid var(--line)}
+    .exercise:first-child{border-top:0}
+    .exercise-number{width:36px;height:36px;display:grid;place-items:center;border:1px solid rgba(223,255,47,.38);border-radius:12px;color:var(--lime);background:rgba(223,255,47,.045);font-size:10px;font-weight:900}
+    .exercise-main{min-width:0}
+    .exercise-main h3{margin:0 0 7px;font-size:14px;line-height:1.18;letter-spacing:-.2px}
+    .type{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:4px 7px;font-size:7px;font-weight:900;letter-spacing:.4px;text-transform:uppercase}
+    .type::before{content:"";width:5px;height:5px;border-radius:50%;background:currentColor}
+    .type.multi{color:var(--lime);background:rgba(223,255,47,.10)}
+    .type.mono{color:#d4d8d2;background:rgba(255,255,255,.07)}
+    .metric{min-height:48px;display:flex;flex-direction:column;align-items:center;justify-content:center;border-left:1px solid var(--line)}
+    .metric strong{font-size:15px;line-height:1;font-weight:950}
+    .metric span{margin-top:5px;color:#777e76;font-size:6px;font-weight:900;letter-spacing:.7px}
+    .legend{margin:22px 4px 0;padding:20px;border:1px dashed rgba(223,255,47,.28);border-radius:22px;color:var(--muted);font-size:12px;line-height:1.65;background:rgba(223,255,47,.025)}
+    .legend strong{color:var(--white)}
+    footer{padding:36px 20px 8px;text-align:center;color:#737a72;font-size:10px;letter-spacing:1.2px;text-transform:uppercase}
+    footer b{color:var(--lime)}
+    button,[role="button"]{-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+    .compare-demand-button,.demand-list-button,.workout-toggle,.count,.modal-close{-webkit-tap-highlight-color:transparent;user-select:none}
+    .compare-demand-button:focus,.demand-list-button:focus{outline:none}
+
+    .demand-card{cursor:pointer;transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease}
+    .demand-card:hover{border-color:rgba(223,255,47,.48);transform:translateY(-1px)}
+    .demand-card:focus-visible{outline:2px solid var(--lime);outline-offset:4px}
+    .demand-action{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px 18px 15px;border-top:1px solid var(--line);color:#aab1a8;font-size:10px;font-weight:850;letter-spacing:.35px}
+    .demand-action b{color:var(--lime);font-size:16px;line-height:1}
+    body.modal-open{overflow:hidden}
+    .demand-modal{position:fixed;inset:0;z-index:1000;display:none;align-items:flex-end;justify-content:center;padding:18px;background:rgba(0,0,0,.76);backdrop-filter:blur(8px)}
+    .demand-modal.open{display:flex}
+    .demand-modal-dialog{width:min(100%,720px);max-height:min(88vh,820px);overflow:hidden;border:1px solid rgba(223,255,47,.3);border-radius:30px;background:linear-gradient(160deg,#171b16,#090b09 78%);box-shadow:0 35px 90px rgba(0,0,0,.58);animation:modalUp .22s ease-out}
+    @keyframes modalUp{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
+    .demand-modal-head{position:sticky;top:0;z-index:2;display:flex;justify-content:space-between;gap:18px;align-items:flex-start;padding:22px 20px 18px;border-bottom:1px solid var(--line);background:linear-gradient(130deg,rgba(223,255,47,.14),rgba(15,18,14,.98) 55%)}
+    .demand-modal-head h2{margin:7px 0 5px;font-size:28px;letter-spacing:-1.3px;text-transform:uppercase}
+    .demand-modal-head p{margin:0;color:var(--muted);font-size:11px;line-height:1.45}
+    .modal-close{flex:0 0 auto;width:42px;height:42px;border:1px solid rgba(255,255,255,.13);border-radius:14px;background:#0b0d0b;color:var(--white);font-size:22px;line-height:1;cursor:pointer}
+    .modal-close:hover,.modal-close:focus-visible{border-color:var(--lime);color:var(--lime);outline:0}
+    .demand-modal-body{max-height:calc(min(88vh,820px) - 112px);overflow:auto;padding:7px 18px 24px}
+    .demand-modal-note{padding:14px 0 4px;color:#727a71;font-size:9px;line-height:1.5}
+    .pwa-strip{margin:-6px 16px 18px;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:0 4px}
+    .pwa-state{display:flex;align-items:center;gap:7px;color:var(--muted);font-size:10px;font-weight:800;letter-spacing:.3px}
+    .pwa-dot{width:7px;height:7px;border-radius:50%;background:var(--lime);box-shadow:0 0 10px rgba(223,255,47,.42)}
+    .pwa-state.offline .pwa-dot{background:#ffb4a8;box-shadow:none}
+    .install-button{border:1px solid rgba(223,255,47,.32);border-radius:999px;background:rgba(223,255,47,.07);color:var(--lime);padding:8px 12px;font:inherit;font-size:9px;font-weight:950;letter-spacing:.7px;text-transform:uppercase;cursor:pointer}
+    .install-button:hover,.install-button:focus-visible{background:rgba(223,255,47,.13);outline:0}
+    .install-button[hidden]{display:none}
+    .update-banner{position:fixed;left:50%;bottom:16px;z-index:1200;width:min(calc(100% - 28px),720px);transform:translateX(-50%);display:none;align-items:center;justify-content:space-between;gap:16px;padding:13px 14px 13px 16px;border:1px solid rgba(223,255,47,.35);border-radius:18px;background:#11150f;box-shadow:0 18px 50px rgba(0,0,0,.46)}
+    .update-banner.show{display:flex}
+    .update-banner span{font-size:11px;font-weight:800;line-height:1.35}
+    .update-banner button{border:0;border-radius:12px;background:var(--lime);color:var(--black);padding:9px 12px;font:inherit;font-size:9px;font-weight:950;letter-spacing:.7px;text-transform:uppercase;cursor:pointer}
+    @media(max-width:390px){
+      .selector-row{grid-template-columns:1fr}
+      .time-chip{text-align:center}
+      .exercise{grid-template-columns:38px minmax(0,1fr) 42px 48px 42px}
+      .column-labels{grid-template-columns:1fr 42px 48px 42px;padding-left:58px}
+      .exercise-main h3{font-size:12.8px}
+      .metric strong{font-size:13px}
+    }
+
+
+    /* Comparação entre fichas e demanda por treino */
+    .demand-head{cursor:default}
+    .compare-demand-button{
+      width:100%;display:flex;align-items:center;justify-content:space-between;gap:14px;
+      margin:6px 0 6px;padding:0;border:0;background:transparent;color:var(--white);
+      text-align:left;cursor:pointer;font:inherit
+    }
+    .compare-demand-button h2{margin:0;font-size:31px;letter-spacing:-1.6px;text-transform:uppercase}
+    .compare-demand-icon{flex:0 0 auto;width:42px;height:42px;display:grid;place-items:center;border-radius:14px;
+      border:1px solid rgba(223,255,47,.35);background:rgba(223,255,47,.08);color:var(--lime);font-size:18px;font-weight:950}
+    .compare-demand-button:hover .compare-demand-icon,.compare-demand-button:focus-visible .compare-demand-icon{background:var(--lime);color:#080a08}
+    .compare-demand-button:focus-visible{outline:2px solid var(--lime);outline-offset:5px;border-radius:12px}
+    .demand-list-button{cursor:pointer;transition:background .18s ease}
+    .demand-list-button:hover{background:rgba(223,255,47,.025)}
+    .demand-list-button:focus-visible{outline:2px solid var(--lime);outline-offset:-4px}
+    .workout-header:hover{background:linear-gradient(130deg,rgba(223,255,47,.15),transparent 58%)}
+
+    .compare-controls{display:grid;grid-template-columns:1fr 36px 1fr;gap:10px;align-items:end;padding:18px 0 20px}
+    .compare-field label{display:block;margin-bottom:7px;color:#848b83;font-size:8px;font-weight:900;letter-spacing:1px;text-transform:uppercase}
+    .compare-field select{padding:12px 36px 12px 12px;border:1px solid rgba(255,255,255,.10);background:#0b0d0b;font-size:12px}
+    .compare-arrow{display:grid;place-items:center;height:42px;color:var(--lime);font-size:18px;font-weight:950}
+    .compare-section{padding:18px 0;border-top:1px solid var(--line)}
+    .compare-section:first-of-type{border-top:0}
+    .compare-section-title{display:flex;justify-content:space-between;gap:12px;align-items:flex-end;margin-bottom:14px}
+    .compare-section-title h3{margin:0;font-size:15px;letter-spacing:-.3px;text-transform:uppercase}
+    .compare-section-title span{color:#737a72;font-size:8px;text-align:right}
+    .compare-chart-row{padding:11px 0;border-top:1px solid rgba(255,255,255,.06)}
+    .compare-chart-row:first-child{border-top:0}
+    .compare-chart-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:9px}
+    .compare-chart-muscle{font-size:14px;font-weight:900;line-height:1.15;padding-top:2px}
+    .delta-stack{display:flex;justify-content:flex-end;gap:6px;flex-wrap:wrap}
+    .delta-pill{display:inline-flex;align-items:center;gap:4px;border-radius:999px;padding:5px 9px;font-size:9px;font-weight:950;white-space:nowrap;background:rgba(255,255,255,.07);color:#cdd2cb}
+    .delta-pill small{font-size:6.5px;letter-spacing:.55px;text-transform:uppercase;color:currentColor;opacity:.68}
+    .delta-pill.up{background:rgba(223,255,47,.12);color:var(--lime)}
+    .delta-pill.down{background:rgba(255,135,120,.10);color:#ff9b8e}
+    .compare-series{display:grid;grid-template-columns:50px 1fr 44px;gap:8px;align-items:center;margin-top:7px}
+    .compare-series-label{color:#969d95;font-size:9px;font-weight:900;white-space:nowrap}
+    .compare-series-track{height:8px;border-radius:999px;background:rgba(255,255,255,.07);overflow:hidden}
+    .compare-series-fill{height:100%;border-radius:999px;background:rgba(255,255,255,.48)}
+    .compare-series.final .compare-series-fill{background:linear-gradient(90deg,var(--lime),#efff91);box-shadow:0 0 14px rgba(223,255,47,.18)}
+    .compare-series-value{text-align:right;font-size:11px;font-weight:950}
+    .compare-table{display:flex;flex-direction:column;border:1px solid rgba(255,255,255,.08);border-radius:18px;overflow:hidden}
+    .compare-table-head,.compare-table-row{display:grid;grid-template-columns:minmax(120px,1.5fr) .55fr .55fr minmax(108px,1fr);gap:7px;align-items:center;padding:10px 11px}
+    .compare-table-head{background:rgba(223,255,47,.06);color:#7d857c;font-size:7px;font-weight:950;letter-spacing:.6px;text-transform:uppercase}
+    .compare-table-row{border-top:1px solid rgba(255,255,255,.06);font-size:10px;min-height:42px}
+    .compare-table-row strong{font-size:10px}
+    .compare-table-row .muscle-name{font-weight:850;line-height:1.15;white-space:nowrap}
+    .change-up{color:var(--lime)}
+    .change-down{color:#ff9b8e}
+    .change-flat{color:#8d948c}
+    .modal-sub-eyebrow{color:var(--lime);font-size:9px;font-weight:900;letter-spacing:1.3px;text-transform:uppercase}
+    .compare-empty{padding:18px 0;color:#9ea59d;font-size:11px;line-height:1.5}
+    @media(max-width:520px){
+      .compare-demand-button h2{font-size:clamp(24px,8.2vw,30px);line-height:.98}
+      .compare-demand-icon{width:38px;height:38px;border-radius:12px}
+      .compare-controls{grid-template-columns:1fr;align-items:stretch;padding:14px 0 16px}
+      .compare-arrow{height:20px;transform:rotate(90deg)}
+      .compare-section{padding:15px 0}
+      .compare-section-title{align-items:flex-start;margin-bottom:10px}
+      .compare-section-title h3{font-size:13px}
+      .compare-section-title span{max-width:130px;font-size:7px;line-height:1.35}
+      .demand-modal{padding:10px}
+      .demand-modal-body{padding-left:12px;padding-right:12px}
+      .section-intro{grid-template-columns:1fr;gap:11px;padding-top:18px}
+      .section-intro h2{font-size:clamp(24px,6.5vw,30px);white-space:nowrap}
+      .week{justify-content:flex-start;flex-wrap:nowrap;overflow-x:auto;padding-bottom:3px;scrollbar-width:none}
+      .week::-webkit-scrollbar{display:none}
+      .week-chip{flex:0 0 auto;min-height:30px;padding:7px 10px;font-size:8.2px}
+      .workout-card{margin-bottom:11px;border-radius:24px}
+      .workout-toggle{padding:18px 0 17px 18px;gap:10px}
+      .workout-header h2{font-size:clamp(25px,8vw,34px)}
+      .workout-header p{font-size:11.5px}
+      .workout-chevron{width:28px;height:28px;border-radius:9px;font-size:17px}
+      .count{min-width:50px;height:50px;margin:13px 17px 13px 0;border-radius:15px;font-size:20px}
+      .hero{min-height:286px;padding-bottom:24px}
+      .hero-copy{margin-top:24px}
+      .compare-chart-row{padding:13px 0}
+      .compare-chart-head{display:flex;align-items:center;flex-wrap:wrap;margin-bottom:10px;gap:7px}
+      .compare-chart-muscle{display:block;font-size:13.5px;padding:0;margin-right:auto}
+      .delta-stack{justify-content:flex-end;gap:5px}
+      .delta-pill{font-size:8.4px;padding:5px 8px}
+      .delta-pill small{font-size:6.2px}
+      .compare-series{grid-template-columns:46px 1fr 39px;gap:7px;margin-top:8px}
+      .compare-series-label{font-size:8.8px}
+      .compare-series-value{font-size:10px}
+      .compare-table{border-radius:16px;overflow-x:hidden}
+      .compare-table-head,.compare-table-row{grid-template-columns:minmax(96px,1.45fr) minmax(36px,.52fr) minmax(36px,.52fr) minmax(82px,1fr);gap:6px;padding:9px 8px}
+      .compare-table-head{display:grid;font-size:6.2px;letter-spacing:.4px}
+      .compare-table-row{font-size:9px;min-height:40px}
+      .compare-table-row:first-of-type{border-top:0}
+      .compare-table-row .muscle-name{font-size:9.2px;padding:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      .compare-cell{min-width:0;font-size:9px;white-space:nowrap}
+      .compare-table-row strong{font-size:9px}
+    }
+
+
+    /* XSTEAM custom selectors — avoid browser-native blue menus in mobile. */
+    .xcombo{position:relative;min-width:0;width:100%;z-index:3}
+    .xcombo.is-open{z-index:20}
+    .xcombo select{display:none!important}
+    .xcombo-btn{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-width:0;min-height:47px;border:1px solid rgba(255,255,255,.14);border-radius:14px;background:#090c09;color:#fafbf6;padding:11px 13px;text-align:left;font:inherit;font-size:15px;font-weight:880;cursor:pointer;appearance:none;-webkit-appearance:none;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+    .xcombo-btn span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .xcombo-btn svg{flex:0 0 auto;transition:transform .18s ease;color:var(--lime)}
+    .xcombo.is-open .xcombo-btn{border-color:rgba(223,255,47,.6);box-shadow:0 0 0 2px rgba(223,255,47,.07)}
+    .xcombo.is-open .xcombo-btn svg{transform:rotate(180deg)}
+    .xcombo-btn:focus-visible,.xcombo-option:focus-visible{outline:2px solid var(--lime);outline-offset:2px}
+    .xcombo-list{position:absolute;top:calc(100% + 7px);left:0;right:0;max-height:280px;overflow-y:auto;background:#101510;border:1px solid rgba(223,255,47,.34);border-radius:16px;box-shadow:0 18px 45px rgba(0,0,0,.65);padding:5px;z-index:40;overscroll-behavior:contain}
+    .xcombo-list[hidden]{display:none!important}
+    .xcombo-option{display:block;width:100%;padding:12px 11px;border:0;border-radius:10px;background:transparent;text-align:left;font:inherit;font-weight:760;font-size:13px;line-height:1.35;color:#d9e0d1;cursor:pointer;white-space:normal;-webkit-tap-highlight-color:transparent}
+    .xcombo-option.is-selected{background:rgba(223,255,47,.13);color:var(--lime)}
+    .xcombo-option:hover{background:rgba(223,255,47,.10)}
+    .sheet-description{max-width:42rem;margin:9px 0 0;color:#adb4a9;font-size:11px;line-height:1.5}
+    .notes-panel{border:1px solid rgba(223,255,47,.20);border-radius:24px;background:linear-gradient(160deg,#171d12,#080b08);margin:22px 0 16px;overflow:hidden}
+    .notes-panel[hidden]{display:none!important}
+    .notes-heading{padding:20px 19px 12px}
+    .notes-heading h2{margin:8px 0 0;font-size:22px;letter-spacing:-.9px}
+    .notes-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;padding:0 15px 16px}
+    .note-item{padding:14px;border:1px solid rgba(255,255,255,.075);border-radius:16px;background:rgba(255,255,255,.025)}
+    .note-item h3{margin:0 0 7px;font-size:13px;line-height:1.3;color:#e1ff62}
+    .note-item p{margin:0;font-size:12px;line-height:1.55;color:#bdc5b7}
+    .compare-warning{padding:11px 13px;border:1px solid #876c3d;background:rgba(133,93,34,.13);color:#ffd8a1;border-radius:12px;margin-bottom:10px;font-size:12px;line-height:1.5}
+    @media(max-width:600px){
+      .notes-grid{grid-template-columns:1fr}
+      .notes-heading h2{font-size:20px}
+      .section-intro{display:block}
+      .section-intro h2{white-space:normal;overflow-wrap:anywhere;font-size:clamp(23px,7vw,32px)}
+      .week{display:flex;justify-content:flex-start;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin-top:14px;padding-bottom:4px}
+      .week::-webkit-scrollbar{display:none}
+      .week-chip{flex:0 0 auto;font-size:10px;padding:9px 11px}
+      .compare-controls{display:grid;grid-template-columns:1fr;gap:10px}
+      .compare-arrow{transform:rotate(90deg);justify-self:center}
+      .compare-section-title h3{font-size:14px}
+      .compare-chart-muscle{font-size:14px;line-height:1.35}
+      .compare-series-label{font-size:11px;min-width:44px}
+      .compare-series-value{font-size:12px}
+      .compare-table{overflow-x:auto}
+      .compare-table-head,.compare-table-row{display:grid!important;grid-template-columns:minmax(82px,1.5fr) minmax(37px,.5fr) minmax(37px,.5fr) minmax(90px,1.2fr)!important;align-items:center;gap:5px;padding-left:8px;padding-right:8px}
+      .compare-table-row .compare-cell:before{display:none!important}
+      .compare-table-row .compare-cell{white-space:nowrap;text-align:right;min-width:0}
+      .compare-table-row .muscle-name{font-size:10.5px;overflow-wrap:anywhere}
+      .compare-table-row .compare-cell:last-child{font-size:10.5px;letter-spacing:-.1px}
+      .compare-table-head{font-size:9px}
+      .demand-modal{padding:10px}
+      .demand-modal-dialog{width:100%;border-radius:24px;max-height:90dvh}
+      .demand-modal-body{max-height:calc(90dvh - 130px)}
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="hero">
+      <div class="brand">
+        <div class="logo-box"><img src="data:image/png;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADb/2wBDAAMCAgMCAgMDAwMEAwMEBQgFBQQEBQoHBwYIDAoMDAsKCwsNDhIQDQ4RDgsLEBYQERMUFRUVDA8XGBYUGBIUFRT/2wBDAQMEBAUEBQkFBQkUDQsNFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBT/wAARCAYABgADASIAAhEBAxEB/8QAHgABAAEEAwEBAAAAAAAAAAAAAAgBAgMJBQYHBAr/xABAEAEAAQMDAQQGCAUCBgMBAQAAAQIDBAUGEQcIEiExExQYQVWSFRkiUVJTYdEJF3GRoTJUFkKBweHwIySiQ0T/xAAcAQEAAgIDAQAAAAAAAAAAAAAAAQIHCAQFBgP/xAAyEQEAAQMCAwcEAQUBAQEBAAAAAQIDEQQFBiExEhNBUVJTkRQVFiKhByMyYXFCgUOx/9oADAMBAAIRAxEAPwCfoDRdcAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA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AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//2Q==" alt="Símbolo XSTEAM"></div>
+        <div class="wordmark">XSTEAM</div>
+      </div>
+      <div class="hero-copy">
+        <span class="kicker">Visualizador de treinamento</span>
+        <h1>Fichas de treino</h1>
+        <p>Consulta organizada de treinos, intensidade e demanda muscular total.</p>
+      </div>
+    </header>
+
+    <section class="selector-shell">
+      <label for="sheetSelect">Selecionar ficha</label>
+      <div class="selector-row">
+        <select id="sheetSelect" aria-label="Selecionar ficha">
+          <option value="baixo-carbo">Baixo Carbo</option>
+        </select>
+        <div class="time-chip" id="sheetTime">Tempo por sessão</div>
+      </div>
+    </section>
+
+    <div class="pwa-strip" aria-live="polite">
+      <div class="pwa-state" id="pwaState"><span class="pwa-dot"></span><span id="connectionStatus">Online</span></div>
+      <button class="install-button" id="installButton" type="button">Instalar app</button>
+    </div>
+
+    <main>
+      <div class="section-intro">
+        <div class="sheet-heading">
+          <span class="kicker">Ficha selecionada</span>
+          <h2 id="sheetTitle">Baixo Carbo</h2>
+          <p class="sheet-description" id="sheetDescription" hidden></p>
+        </div>
+        <div class="week" id="workoutSequence" aria-label="Sequência de treinos"></div>
+      </div>
+
+      <section class="demand-card" id="demandPanel">
+        <header class="demand-head">
+          <span class="eyebrow">Visão geral da ficha</span>
+          <button class="compare-demand-button" id="compareDemandButton" type="button" aria-haspopup="dialog" aria-controls="compareModal">
+            <h2>Demanda muscular total</h2>
+            <span class="compare-demand-icon" aria-hidden="true">⇄</span>
+          </button>
+          <p>Resumo dos cinco grupos prioritários. Toque no título para comparar duas fichas de treino.</p>
+          <div id="dataStatus" style="margin-top:10px;color:#dfff2f;font-size:10px;font-weight:800;letter-spacing:.4px">
+            Conectando à base de demanda muscular…
+          </div>
+        </header>
+        <div class="demand-list-button" id="demandListButton" role="button" tabindex="0" aria-haspopup="dialog" aria-controls="demandModal" aria-label="Abrir detalhamento completo da demanda muscular da ficha selecionada">
+          <div class="demand-list" id="demandList">
+            <div style="padding:18px;color:#9ea59d">Aguardando a planilha de demanda muscular…</div>
+          </div>
+          <div class="demand-action"><span>Toque nas demandas para ver todos os grupos musculares</span><b>↗</b></div>
+        </div>
+        <div class="method">Fonte única: planilha Demanda_Muscular. Cálculo: coeficiente de cada músculo × número de séries válidas.</div>
+      </section>
+
+      <div id="workoutsContainer"></div>
+      <section id="notesPanel" class="notes-panel" hidden aria-label="Observações da ficha"></section>
+
+      <div class="legend">
+        <strong>Intensidade:</strong> a prescrição de séries, repetições e RIR é específica de cada ficha. O painel resume cinco grupos prioritários; o detalhamento completo fica disponível ao clicar na demanda muscular.
+      </div>
+    </main>
+
+    <footer><b>XSTEAM</b> • Invista em você mesmo</footer>
+  </div>
+
+
+  <div class="demand-modal" id="demandModal" role="dialog" aria-modal="true" aria-labelledby="demandModalTitle" aria-hidden="true">
+    <div class="demand-modal-dialog">
+      <header class="demand-modal-head">
+        <div>
+          <span class="eyebrow">Detalhamento da ficha</span>
+          <h2 id="demandModalTitle">Todos os grupos musculares</h2>
+          <p id="demandModalSubtitle">Demanda calculada para a ficha selecionada.</p>
+        </div>
+        <button class="modal-close" id="demandModalClose" type="button" aria-label="Fechar detalhamento">×</button>
+      </header>
+      <div class="demand-modal-body">
+        <div class="demand-list" id="demandModalList">
+          <div style="padding:18px;color:#9ea59d">Aguardando a planilha de demanda muscular…</div>
+        </div>
+        <div class="demand-modal-note">Todos os grupos musculares da base são exibidos separadamente e ordenados pela demanda calculada da ficha atual.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="demand-modal" id="compareModal" role="dialog" aria-modal="true" aria-labelledby="compareModalTitle" aria-hidden="true">
+    <div class="demand-modal-dialog">
+      <header class="demand-modal-head">
+        <div>
+          <span class="eyebrow">Progressão entre fichas</span>
+          <h2 id="compareModalTitle">Comparar demandas</h2>
+          <p>Compare a mudança absoluta e relativa do volume muscular entre duas fichas.</p>
+        </div>
+        <button class="modal-close" id="compareModalClose" type="button" aria-label="Fechar comparador">×</button>
+      </header>
+      <div class="demand-modal-body">
+        <div class="compare-controls">
+          <div class="compare-field">
+            <label for="compareFrom">Ficha inicial</label>
+            <select id="compareFrom"></select>
+          </div>
+          <div class="compare-arrow" aria-hidden="true">→</div>
+          <div class="compare-field">
+            <label for="compareTo">Ficha final</label>
+            <select id="compareTo"></select>
+          </div>
+        </div>
+
+        <section class="compare-section">
+          <div class="compare-section-title">
+            <h3>5 grupos principais</h3>
+            <span>Inicial × final</span>
+          </div>
+          <div id="compareFocusChart" class="compare-focus-chart"></div>
+        </section>
+
+        <section class="compare-section">
+          <div class="compare-section-title">
+            <h3>Todos os grupos musculares</h3>
+            <span>Inclui demandas zeradas</span>
+          </div>
+          <div id="compareAllGroups"></div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <div class="update-banner" id="updateBanner" role="status" aria-live="polite">
+    <span>Uma nova versão da ficha está disponível.</span>
+    <button id="updateButton" type="button">Atualizar</button>
+  </div>
+
+  <script>
+    const DEMAND_GVIZ_URL = "https://docs.google.com/spreadsheets/d/1ukUCtws2hV2_PW7JzduQV4cr_EcqVC6-EoHzut1KS0Y/gviz/tq?gid=139666673&headers=1";
+    const CACHE_KEY = "xsteamDemandGvizV3";
+    const CACHE_TIME_KEY = "xsteamDemandGvizV3Time";
+    const SELECTED_SHEET_KEY = "xsteamSelectedSheet";
+    const fichas = [{"id":"baixo-carbo","name":"Baixo Carbo","time":"Tempo por sessão","workouts":[{"name":"SUPERIOR A","tag":"Treino 01","focus":"Superior completo","exercises":[{"name":"Puxada frente pegada pronada","type":"Multiarticular","sets":2,"reps":"4–8","rir":"0–1"},{"name":"Desenvolvimento com halteres sentado","type":"Multiarticular","sets":2,"reps":"4–8","rir":"0–1"},{"name":"Remada baixa pegada neutra","type":"Multiarticular","sets":2,"reps":"8–12","rir":"0–1"},{"name":"Remada unilateral com halteres","type":"Multiarticular","sets":2,"reps":"8–12","rir":"0–1"},{"name":"Abdução de ombros com halteres","type":"Monoarticular","sets":1,"reps":"10–15","rir":"0"}]},{"name":"INFERIOR A","tag":"Treino 02","focus":"Ênfase em quadríceps","exercises":[{"name":"Cadeira abdutora (encostado)","type":"Monoarticular","sets":1,"reps":"10–15","rir":"0"},{"name":"Stiff unilateral com halter","type":"Multiarticular","sets":2,"reps":"4–8","rir":"0–1"},{"name":"Afundo com halteres (sem step)","type":"Multiarticular","sets":2,"reps":"4–8","rir":"0–1"},{"name":"Leg press 45° (bilateral)","type":"Multiarticular","sets":2,"reps":"8–12","rir":"0–1"},{"name":"Cadeira extensora (bilateral)","type":"Monoarticular","sets":1,"reps":"10–15","rir":"0"},{"name":"Cadeira flexora (bilateral)","type":"Monoarticular","sets":1,"reps":"10–15","rir":"0"}]},{"name":"PEITO COMPLETO","tag":"Treino 03","focus":"Peito, ombros e tríceps","exercises":[{"name":"Supino inclinado com halter","type":"Multiarticular","sets":2,"reps":"4–8","rir":"0–1"},{"name":"Supino inclinado com barra guiada","type":"Multiarticular","sets":2,"reps":"4–8","rir":"0–1"},{"name":"Crucifixo inclinado com halter","type":"Monoarticular","sets":1,"reps":"10–15","rir":"0"},{"name":"Abdução de ombros com halteres","type":"Monoarticular","sets":1,"reps":"10–15","rir":"0"},{"name":"Tríceps frânces com halter","type":"Monoarticular","sets":1,"reps":"10–15","rir":"0"}]},{"name":"COSTAS COMPLETO","tag":"Treino 04","focus":"Costas e bíceps","exercises":[{"name":"Remada baixa pegada neutra","type":"Multiarticular","sets":2,"reps":"4–8","rir":"0–1"},{"name":"Remada baixa pegada supinada","type":"Multiarticular","sets":2,"reps":"4–8","rir":"0–1"},{"name":"Puxada frente pegada neutra (fechada)","type":"Multiarticular","sets":2,"reps":"8–12","rir":"0–1"},{"name":"Puxada frente pegada supinada","type":"Multiarticular","sets":2,"reps":"8–12","rir":"0–1"},{"name":"Rosca direta com halteres no banco inclinado","type":"Monoarticular","sets":1,"reps":"10–15","rir":"0"}]},{"name":"INFERIOR B","tag":"Treino 05","focus":"Ênfase em posteriores","exercises":[{"name":"Agachamento búlgaro com halters","type":"Multiarticular","sets":2,"reps":"4–8","rir":"0–1"},{"name":"RDL com barra livre","type":"Multiarticular","sets":2,"reps":"4–8","rir":"0–1"},{"name":"Cadeira abdutora (encostado)","type":"Monoarticular","sets":1,"reps":"10–15","rir":"0"},{"name":"Flexora vertical","type":"Monoarticular","sets":1,"reps":"10–15","rir":"0"},{"name":"Cadeira extensora (bilateral)","type":"Monoarticular","sets":1,"reps":"10–15","rir":"0"}]},{"name":"SUPERIOR B","tag":"Treino 06","focus":"Peito e costas","exercises":[{"name":"Puxada frente pegada pronada","type":"Multiarticular","sets":2,"reps":"4–8","rir":"0–1"},{"name":"Remada baixa pegada neutra","type":"Multiarticular","sets":2,"reps":"4–8","rir":"0–1"},{"name":"Supino reto com halter","type":"Multiarticular","sets":2,"reps":"8–12","rir":"0–1"},{"name":"Supino inclinado com barra guiada","type":"Multiarticular","sets":2,"reps":"8–12","rir":"0–1"},{"name":"Abdução de ombros com halteres","type":"Monoarticular","sets":1,"reps":"10–15","rir":"0"}]}]},{"id":"progressao-volume","name":"Progressão de volume","time":"Tempo por sessão","workouts":[{"name":"SUPERIOR A","tag":"Treino 01","focus":"Superior completo","exercises":[{"name":"Puxada frente pegada pronada","type":"Multiarticular","sets":3,"reps":"4–8","rir":"0–1"},{"name":"Desenvolvimento com halteres sentado","type":"Multiarticular","sets":3,"reps":"4–8","rir":"0–1"},{"name":"Remada baixa pegada neutra","type":"Multiarticular","sets":2,"reps":"8–12","rir":"0–1"},{"name":"Remada unilateral com halteres","type":"Multiarticular","sets":2,"reps":"8–12","rir":"0–1"},{"name":"Abdução de ombros com halteres","type":"Monoarticular","sets":2,"reps":"10–15","rir":"0"}]},{"name":"INFERIOR A","tag":"Treino 02","focus":"Volume controlado de inferiores","exercises":[{"name":"Cadeira extensora (bilateral)","type":"Monoarticular","sets":3,"reps":"10–15","rir":"0"},{"name":"Cadeira flexora (bilateral)","type":"Monoarticular","sets":3,"reps":"10–15","rir":"0"},{"name":"RDL unilateral com halteres","type":"Monoarticular","sets":2,"reps":"10–15","rir":"0"},{"name":"Rotação externa de ombros com elástico","type":"Preparatório","sets":2,"reps":"10–15","rir":"0"},{"name":"Abdução de ombros com halteres","type":"Monoarticular","sets":2,"reps":"10–15","rir":"0"}]},{"name":"PEITO COMPLETO","tag":"Treino 03","focus":"Peito, ombros e tríceps","exercises":[{"name":"Supino inclinado com halter","type":"Multiarticular","sets":3,"reps":"4–8","rir":"0–1"},{"name":"Supino inclinado com barra guiada","type":"Multiarticular","sets":3,"reps":"4–8","rir":"0–1"},{"name":"Crucifixo inclinado com halter","type":"Monoarticular","sets":2,"reps":"10–15","rir":"0"},{"name":"Abdução de ombros com halteres","type":"Monoarticular","sets":2,"reps":"10–15","rir":"0"},{"name":"Tríceps frânces com halter","type":"Monoarticular","sets":1,"reps":"10–15","rir":"0"}]},{"name":"COSTAS COMPLETO","tag":"Treino 04","focus":"Costas e bíceps","exercises":[{"name":"Remada baixa pegada neutra","type":"Multiarticular","sets":3,"reps":"4–8","rir":"0–1"},{"name":"Remada baixa pegada supinada","type":"Multiarticular","sets":3,"reps":"4–8","rir":"0–1"},{"name":"Puxada frente pegada neutra (fechada)","type":"Multiarticular","sets":2,"reps":"8–12","rir":"0–1"},{"name":"Puxada frente pegada supinada","type":"Multiarticular","sets":2,"reps":"8–12","rir":"0–1"},{"name":"Rosca direta com halteres no banco inclinado","type":"Monoarticular","sets":1,"reps":"10–15","rir":"0"}]},{"name":"INFERIOR B","tag":"Treino 05","focus":"Volume controlado de inferiores","exercises":[{"name":"Cadeira extensora (bilateral)","type":"Monoarticular","sets":3,"reps":"10–15","rir":"0"},{"name":"Cadeira flexora (bilateral)","type":"Monoarticular","sets":3,"reps":"10–15","rir":"0"},{"name":"RDL unilateral com halteres","type":"Monoarticular","sets":2,"reps":"10–15","rir":"0"},{"name":"Rotação externa de ombros com elástico","type":"Preparatório","sets":2,"reps":"10–15","rir":"0"},{"name":"Abdução de ombros com halteres","type":"Monoarticular","sets":2,"reps":"10–15","rir":"0"}]},{"name":"SUPERIOR B","tag":"Treino 06","focus":"Peito e costas","exercises":[{"name":"Puxada frente pegada pronada","type":"Multiarticular","sets":3,"reps":"4–8","rir":"0–1"},{"name":"Remada baixa pegada neutra","type":"Multiarticular","sets":3,"reps":"4–8","rir":"0–1"},{"name":"Supino reto com halter","type":"Multiarticular","sets":2,"reps":"8–12","rir":"0–1"},{"name":"Supino inclinado com barra guiada","type":"Multiarticular","sets":2,"reps":"8–12","rir":"0–1"},{"name":"Abdução de ombros com halteres","type":"Monoarticular","sets":2,"reps":"10–15","rir":"0"}]}]},{"id":"cut-high","name":"CUT - High","time":"7 sessões • semana","weeklyOccurrences":[2,2,1,1,1],"description":"5 treinos + repetição dos treinos 1 (Peitoral A) e 2 (Dorsal A) ao final do ciclo. A demanda muscular total considera 7 sessões.","notes":[{"title":"Abdominal (dia sim × dia não)","description":"3 séries próximas da falha: abdominal infra livre e abdominal crunch."},{"title":"Cardio (dia sim × dia não)","description":"30 minutos de esteira inclinada."},{"title":"Panturrilha nos dias de cardio","description":"3 séries válidas em qualquer máquina de panturrilha."},{"title":"Preparação antes dos superiores","description":"Alongamento de rotação interna do ombro no chão (3×) + rotação externa na polia, na altura do joelho (3×)."}],"workouts":[{"name":"PEITORAL A","tag":"Treino 01","focus":"Peitoral • fase CUT","exercises":[{"name":"Supino inclinado com halter","type":"Multiarticular","sets":3,"reps":"4–8","rir":"0–1"},{"name":"Supino inclinado com barra guiada","type":"Multiarticular","sets":2,"reps":"6–10","rir":"0–1"},{"name":"Crucifixo inclinado com halter","type":"Monoarticular","sets":2,"reps":"8–12","rir":"0"},{"name":"Abdução de ombros com halteres","type":"Monoarticular","sets":2,"reps":"8–12","rir":"0"},{"name":"Flexão de ombros no banco inclinado","type":"Monoarticular","sets":1,"reps":"10–15","rir":"0"}]},{"name":"DORSAL A","tag":"Treino 02","focus":"Costas • fase CUT","exercises":[{"name":"Remada baixa pegada neutra","type":"Multiarticular","sets":3,"reps":"4–8","rir":"0–1"},{"name":"Remada unilateral na polia","type":"Multiarticular","sets":2,"reps":"6–10","rir":"0–1"},{"name":"Puxada frente pegada neutra (fechada)","type":"Multiarticular","sets":2,"reps":"6–10","rir":"0–1"},{"name":"Puxada frente pegada supinada","type":"Multiarticular","sets":2,"reps":"6–10","rir":"0–1"},{"name":"Crucifixo inverso na polia","type":"Monoarticular","sets":1,"reps":"10–15","rir":"0"}]},{"name":"PEITORAL B","tag":"Treino 03","focus":"Peitoral • fase CUT","exercises":[{"name":"Supino reto com halter","type":"Multiarticular","sets":3,"reps":"4–8","rir":"0–1"},{"name":"Supino inclinado com barra guiada","type":"Multiarticular","sets":2,"reps":"6–10","rir":"0–1"},{"name":"Desenvolvimento com halteres sentado","type":"Multiarticular","sets":2,"reps":"6–10","rir":"0–1"},{"name":"Abdução de ombros com halteres","type":"Monoarticular","sets":2,"reps":"8–12","rir":"0"},{"name":"Abdução de ombro na polia","type":"Monoarticular","sets":1,"reps":"10–15","rir":"0"}]},{"name":"DORSAL B","tag":"Treino 04","focus":"Costas • fase CUT","exercises":[{"name":"Remada baixa pegada neutra","type":"Multiarticular","sets":3,"reps":"4–8","rir":"0–1"},{"name":"Remada baixa pegada supinada","type":"Multiarticular","sets":2,"reps":"6–10","rir":"0–1"},{"name":"Puxada frente pegada neutra (fechada)","type":"Multiarticular","sets":2,"reps":"6–10","rir":"0–1"},{"name":"Puxada frente pegada pronada","type":"Multiarticular","sets":2,"reps":"6–10","rir":"0–1"},{"name":"Remada baixa pegada pronada (aberta)","type":"Multiarticular","sets":1,"reps":"10–15","rir":"0–1"}]},{"name":"INFERIORES","tag":"Treino 05","focus":"Extensora, flexora e complementares","exercises":[{"name":"Cadeira extensora (bilateral)","type":"Monoarticular","sets":2,"reps":"10–15","rir":"0"},{"name":"Cadeira flexora (bilateral)","type":"Monoarticular","sets":2,"reps":"10–15","rir":"0"},{"name":"RDL unilateral com halteres","type":"Monoarticular","sets":1,"reps":"10–15","rir":"0"},{"name":"Rotação externa de ombros com elástico","type":"Preparatório","sets":2,"reps":"10–15","rir":"0"},{"name":"Abdução de ombros com halteres","type":"Monoarticular","sets":2,"reps":"10–15","rir":"0"}]}]},{"id":"cut-medium","name":"CUT - Medium","time":"7 sessões • semana","weeklyOccurrences":[2,2,1,1,1],"description":"Mesmos cinco treinos de CUT - High, com uma série válida adicional em cada exercício e repetição dos dois primeiros treinos (7 sessões por semana).","notes":[{"title":"Abdominal (dia sim × dia não)","description":"3 séries próximas da falha: abdominal infra livre e abdominal crunch."},{"title":"Cardio (dia sim × dia não)","description":"30 minutos de esteira inclinada."},{"title":"Panturrilha nos dias de cardio","description":"3 séries válidas em qualquer máquina de panturrilha."},{"title":"Preparação antes dos superiores","description":"Alongamento de rotação interna do ombro no chão (3×) + rotação externa na polia, na altura do joelho (3×)."}],"workouts":[{"name":"PEITORAL A","tag":"Treino 01","focus":"Peitoral • fase CUT","exercises":[{"name":"Supino inclinado com halter","type":"Multiarticular","sets":4,"reps":"4–8","rir":"0–1"},{"name":"Supino inclinado com barra guiada","type":"Multiarticular","sets":3,"reps":"6–10","rir":"0–1"},{"name":"Crucifixo inclinado com halter","type":"Monoarticular","sets":3,"reps":"8–12","rir":"0"},{"name":"Abdução de ombros com halteres","type":"Monoarticular","sets":3,"reps":"8–12","rir":"0"},{"name":"Flexão de ombros no banco inclinado","type":"Monoarticular","sets":2,"reps":"10–15","rir":"0"}]},{"name":"DORSAL A","tag":"Treino 02","focus":"Costas • fase CUT","exercises":[{"name":"Remada baixa pegada neutra","type":"Multiarticular","sets":4,"reps":"4–8","rir":"0–1"},{"name":"Remada unilateral na polia","type":"Multiarticular","sets":3,"reps":"6–10","rir":"0–1"},{"name":"Puxada frente pegada neutra (fechada)","type":"Multiarticular","sets":3,"reps":"6–10","rir":"0–1"},{"name":"Puxada frente pegada supinada","type":"Multiarticular","sets":3,"reps":"6–10","rir":"0–1"},{"name":"Crucifixo inverso na polia","type":"Monoarticular","sets":2,"reps":"10–15","rir":"0"}]},{"name":"PEITORAL B","tag":"Treino 03","focus":"Peitoral • fase CUT","exercises":[{"name":"Supino reto com halter","type":"Multiarticular","sets":4,"reps":"4–8","rir":"0–1"},{"name":"Supino inclinado com barra guiada","type":"Multiarticular","sets":3,"reps":"6–10","rir":"0–1"},{"name":"Desenvolvimento com halteres sentado","type":"Multiarticular","sets":3,"reps":"6–10","rir":"0–1"},{"name":"Abdução de ombros com halteres","type":"Monoarticular","sets":3,"reps":"8–12","rir":"0"},{"name":"Abdução de ombro na polia","type":"Monoarticular","sets":2,"reps":"10–15","rir":"0"}]},{"name":"DORSAL B","tag":"Treino 04","focus":"Costas • fase CUT","exercises":[{"name":"Remada baixa pegada neutra","type":"Multiarticular","sets":4,"reps":"4–8","rir":"0–1"},{"name":"Remada baixa pegada supinada","type":"Multiarticular","sets":3,"reps":"6–10","rir":"0–1"},{"name":"Puxada frente pegada neutra (fechada)","type":"Multiarticular","sets":3,"reps":"6–10","rir":"0–1"},{"name":"Puxada frente pegada pronada","type":"Multiarticular","sets":3,"reps":"6–10","rir":"0–1"},{"name":"Remada baixa pegada pronada (aberta)","type":"Multiarticular","sets":2,"reps":"10–15","rir":"0–1"}]},{"name":"INFERIORES","tag":"Treino 05","focus":"Extensora, flexora e complementares","exercises":[{"name":"Cadeira extensora (bilateral)","type":"Monoarticular","sets":3,"reps":"10–15","rir":"0"},{"name":"Cadeira flexora (bilateral)","type":"Monoarticular","sets":3,"reps":"10–15","rir":"0"},{"name":"RDL unilateral com halteres","type":"Monoarticular","sets":2,"reps":"10–15","rir":"0"},{"name":"Rotação externa de ombros com elástico","type":"Preparatório","sets":3,"reps":"10–15","rir":"0"},{"name":"Abdução de ombros com halteres","type":"Monoarticular","sets":3,"reps":"10–15","rir":"0"}]}]},{"id":"cut-low","name":"CUT - Low","time":"7 treinos • ciclo","weeklyOccurrences":[1,1,1,1,1,1,1],"description":"Sete treinos diferentes por ciclo, com três séries válidas por exercício. Dorsal B é o treino 2; Dorsal A, o treino 6.","notes":[{"title":"Abdominal (dia sim × dia não)","description":"3 séries próximas da falha: abdominal infra livre e abdominal crunch."},{"title":"Cardio (dia sim × dia não)","description":"30 minutos de esteira inclinada."},{"title":"Panturrilha nos dias de cardio","description":"3 séries válidas em qualquer máquina de panturrilha."},{"title":"Preparação antes dos superiores","description":"Alongamento de rotação interna do ombro no chão (3×) + rotação externa na polia, na altura do joelho (3×)."}],"workouts":[{"name":"PEITORAL A","tag":"Treino 01","focus":"Peito • ênfase superior","exercises":[{"name":"Supino inclinado com halter","type":"Multiarticular","sets":3,"reps":"4–8","rir":"0–1"},{"name":"Supino inclinado com barra guiada","type":"Multiarticular","sets":3,"reps":"6–10","rir":"0–1"},{"name":"Crucifixo inclinado com halter","type":"Monoarticular","sets":3,"reps":"8–12","rir":"0"},{"name":"Cross over (polia alta)","type":"Monoarticular","sets":3,"reps":"8–12","rir":"0"}]},{"name":"DORSAL B","tag":"Treino 02","focus":"Costas • remadas e puxadas","exercises":[{"name":"Remada baixa pegada neutra","type":"Multiarticular","sets":3,"reps":"4–8","rir":"0–1"},{"name":"Remada baixa pegada supinada","type":"Multiarticular","sets":3,"reps":"6–10","rir":"0–1"},{"name":"Puxada frente pegada neutra (fechada)","type":"Multiarticular","sets":3,"reps":"6–10","rir":"0–1"},{"name":"Puxada frente pegada pronada","type":"Multiarticular","sets":3,"reps":"6–10","rir":"0–1"},{"name":"Remada baixa pegada pronada (aberta)","type":"Multiarticular","sets":3,"reps":"6–10","rir":"0–1"}]},{"name":"OMBROS A","tag":"Treino 03","focus":"Deltoides • desenvolvimento e acessórios","exercises":[{"name":"Desenvolvimento Arnold","type":"Multiarticular","sets":3,"reps":"4–8","rir":"0–1"},{"name":"Abdução de ombros com halteres","type":"Monoarticular","sets":3,"reps":"8–12","rir":"0"},{"name":"Flexão de ombros no banco inclinado","type":"Monoarticular","sets":3,"reps":"8–12","rir":"0"},{"name":"Face pull na polia com corda","type":"Monoarticular","sets":3,"reps":"8–12","rir":"0"}]},{"name":"INFERIORES","tag":"Treino 04","focus":"Extensora e flexora","exercises":[{"name":"Cadeira extensora (bilateral)","type":"Monoarticular","sets":3,"reps":"10–15","rir":"0"},{"name":"Cadeira flexora (bilateral)","type":"Monoarticular","sets":3,"reps":"10–15","rir":"0"}]},{"name":"PEITORAL B","tag":"Treino 05","focus":"Peito • reto e inclinado","exercises":[{"name":"Supino reto com halter","type":"Multiarticular","sets":3,"reps":"4–8","rir":"0–1"},{"name":"Supino inclinado com barra guiada","type":"Multiarticular","sets":3,"reps":"6–10","rir":"0–1"},{"name":"Crucifixo inclinado com halter","type":"Monoarticular","sets":3,"reps":"8–12","rir":"0"},{"name":"Cross over (polia baixa)","type":"Monoarticular","sets":3,"reps":"8–12","rir":"0"}]},{"name":"DORSAL A","tag":"Treino 06","focus":"Costas • remada unilateral e puxadas","exercises":[{"name":"Remada baixa pegada neutra","type":"Multiarticular","sets":3,"reps":"4–8","rir":"0–1"},{"name":"Remada unilateral na polia","type":"Multiarticular","sets":3,"reps":"6–10","rir":"0–1"},{"name":"Puxada frente pegada neutra (fechada)","type":"Multiarticular","sets":3,"reps":"6–10","rir":"0–1"},{"name":"Puxada frente pegada supinada","type":"Multiarticular","sets":3,"reps":"6–10","rir":"0–1"}]},{"name":"OMBROS B","tag":"Treino 07","focus":"Deltoides • diferentes planos","exercises":[{"name":"Desenvolvimento com halteres sentado","type":"Multiarticular","sets":3,"reps":"4–8","rir":"0–1"},{"name":"Abdução de ombros com halteres","type":"Monoarticular","sets":3,"reps":"8–12","rir":"0"},{"name":"Abdução de ombro na polia","type":"Monoarticular","sets":3,"reps":"8–12","rir":"0"},{"name":"Flexão de ombros no banco inclinado","type":"Monoarticular","sets":3,"reps":"8–12","rir":"0"}]}]}];
+
+    const FOCUS_MUSCLES = ["Dorsal", "Deltóide anterior", "Deltóide lateral", "Deltóide posterior", "Peitoral"];
+    const selector = document.getElementById("sheetSelect");
+    const demandPanel = document.getElementById("demandPanel");
+    const demandListButton = document.getElementById("demandListButton");
+    const compareDemandButton = document.getElementById("compareDemandButton");
+    const demandModal = document.getElementById("demandModal");
+    const demandModalClose = document.getElementById("demandModalClose");
+    const compareModal = document.getElementById("compareModal");
+    const compareModalClose = document.getElementById("compareModalClose");
+    const compareFrom = document.getElementById("compareFrom");
+    const compareTo = document.getElementById("compareTo");
+    const workoutsContainer = document.getElementById("workoutsContainer");
+    const installButton = document.getElementById("installButton");
+    const pwaState = document.getElementById("pwaState");
+    const connectionStatus = document.getElementById("connectionStatus");
+    const updateBanner = document.getElementById("updateBanner");
+    const updateButton = document.getElementById("updateButton");
+    let demandDatabase = null;
+    let muscleHeaders = [];
+    let currentDemandTotals = {};
+    let lastSuccessfulStatus = "";
+    let modalReturnFocus = null;
+    let compareModalReturnFocus = null;
+    let deferredInstallPrompt = null;
+    let waitingServiceWorker = null;
+    let serviceWorkerReloading = false;
+
+    function normalizeText(value) {
+      return String(value ?? "")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, " ")
+        .trim();
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function parseNumber(value) {
+      if (typeof value === "number") {
+        return Number.isFinite(value) ? value : 0;
+      }
+
+      let text = String(value ?? "0").trim();
+      if (!text) return 0;
+
+      const lastComma = text.lastIndexOf(",");
+      const lastDot = text.lastIndexOf(".");
+
+      if (lastComma >= 0 && lastDot >= 0) {
+        if (lastComma > lastDot) {
+          text = text.replace(/\./g, "").replace(",", ".");
+        } else {
+          text = text.replace(/,/g, "");
+        }
+      } else if (lastComma >= 0) {
+        text = text.replace(",", ".");
+      }
+
+      const number = Number(text);
+      return Number.isFinite(number) ? number : 0;
+    }
+
+    function gvizValue(cell) {
+      if (!cell || cell.v === null || cell.v === undefined) return "";
+      return cell.v;
+    }
+
+    function buildDemandDatabaseFromGviz(response) {
+      if (!response || response.status !== "ok" || !response.table) {
+        const message = response?.errors?.[0]?.detailed_message ||
+                        response?.errors?.[0]?.message ||
+                        "Resposta inválida da planilha.";
+        throw new Error(message);
+      }
+
+      const table = response.table;
+      const headers = table.cols.map(col => String(col.label || col.id || "").trim());
+      const exerciseIndex = headers.findIndex(header => normalizeText(header) === "exercicio");
+      const firstMuscleIndex = headers.findIndex(header => normalizeText(header) === "gluteos");
+      const lastMuscleIndex = headers.findIndex(header => normalizeText(header) === "eretores");
+
+      if (exerciseIndex < 0) throw new Error("Coluna Exercício não encontrada.");
+      if (firstMuscleIndex < 0 || lastMuscleIndex < firstMuscleIndex) {
+        throw new Error("Intervalo de grupos musculares (Glúteos → Eretores) não encontrado.");
+      }
+
+      const muscleColumns = headers
+        .map((header, index) => ({ header, index }))
+        .filter(column => column.index >= firstMuscleIndex && column.index <= lastMuscleIndex && column.header);
+
+      muscleHeaders = muscleColumns.map(column => column.header);
+      const database = new Map();
+
+      for (const row of table.rows || []) {
+        const cells = row.c || [];
+        const exercise = String(gvizValue(cells[exerciseIndex]) || "").trim();
+        if (!exercise) continue;
+
+        const muscles = {};
+        for (const column of muscleColumns) {
+          muscles[column.header] = parseNumber(gvizValue(cells[column.index]));
+        }
+
+        database.set(normalizeText(exercise), { exercise, muscles });
+      }
+
+      if (!database.size) throw new Error("Nenhum exercício foi carregado da planilha.");
+      return database;
+    }
+
+    function calculateExercisesDemand(exercises) {
+      const totals = Object.fromEntries(muscleHeaders.map(muscle => [muscle, 0]));
+      const missing = [];
+
+      for (const exercise of exercises || []) {
+        const record = demandDatabase?.get(normalizeText(exercise.name));
+        if (!record) {
+          missing.push(exercise.name);
+          continue;
+        }
+
+        for (const [muscle, coefficient] of Object.entries(record.muscles)) {
+          totals[muscle] = (totals[muscle] || 0) + coefficient * exercise.sets;
+        }
+      }
+
+      return { totals, missing };
+    }
+
+    function calculateSheetDemand(sheet) {
+      const occurrences = sheet?.weeklyOccurrences || [];
+      const repeatedExercises = (sheet?.workouts || []).flatMap((workout, index) => {
+        const repeats = Math.max(1, Math.floor(Number(occurrences[index] || 1)));
+        return Array.from({ length: repeats }, () => workout.exercises || []).flat();
+      });
+      return calculateExercisesDemand(repeatedExercises);
+    }
+
+    function calculateWorkoutDemand(workout) {
+      return calculateExercisesDemand(workout?.exercises || []);
+    }
+
+    function demandEntries(demand, muscles = null, includeZero = false) {
+      const source = muscles
+        ? muscles.map(muscle => [muscle, Number(demand?.[muscle] || 0)])
+        : Object.entries(demand || {});
+
+      return source
+        .filter(([, value]) => includeZero || value > 0)
+        .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "pt-BR"));
+    }
+
+    function demandRowsHtml(entries) {
+      if (!entries.length) return '<div style="padding:18px;color:#9ea59d">Nenhuma demanda disponível.</div>';
+      const max = Math.max(...entries.map(([, value]) => value), 1);
+      return entries.map(([muscle, value], index) => `
+        <div class="demand-row">
+          <div class="demand-topline">
+            <span><b style="color:#747b73;margin-right:8px">${String(index + 1).padStart(2, "0")}</b>${escapeHtml(muscle)}</span>
+            <strong>${value.toLocaleString("pt-BR", { maximumFractionDigits: 2 })}</strong>
+          </div>
+          <div class="demand-track">
+            <div class="demand-fill" style="width:${(value / max) * 100}%"></div>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    function renderDemand(demand) {
+      currentDemandTotals = demand || {};
+      document.getElementById("demandList").innerHTML = demandRowsHtml(
+        demandEntries(currentDemandTotals, FOCUS_MUSCLES, true)
+      );
+      renderDemandModal(currentDemandTotals);
+    }
+
+    function renderDemandModal(demand, options = {}) {
+      const {
+        title = "Todos os grupos musculares",
+        subtitle = "Demanda calculada para a ficha selecionada.",
+        includeZero = true,
+        note = "Todos os grupos musculares da base são exibidos separadamente e ordenados pela demanda calculada."
+      } = options;
+      const allMuscles = muscleHeaders.length ? muscleHeaders : Object.keys(demand || {});
+      document.getElementById("demandModalTitle").textContent = title;
+      document.getElementById("demandModalSubtitle").textContent = subtitle;
+      document.getElementById("demandModalList").innerHTML = demandRowsHtml(
+        demandEntries(demand, allMuscles, includeZero)
+      );
+      const noteEl = demandModal.querySelector(".demand-modal-note");
+      if (noteEl) noteEl.textContent = note;
+    }
+
+    function openDemandModal(options = {}) {
+      modalReturnFocus = document.activeElement;
+      const sheet = fichas.find(item => item.id === selector.value);
+      renderDemandModal(options.demand || currentDemandTotals, {
+        title: options.title || "Todos os grupos musculares",
+        subtitle: options.subtitle || (sheet ? `Demanda calculada para: ${sheet.name}.` : "Demanda calculada para a ficha selecionada."),
+        includeZero: options.includeZero ?? true,
+        note: options.note || "Todos os grupos musculares da base são exibidos separadamente e ordenados pela demanda calculada."
+      });
+      demandModal.classList.add("open");
+      demandModal.setAttribute("aria-hidden", "false");
+      document.body.classList.add("modal-open");
+      demandModalClose.focus();
+    }
+
+    function closeDemandModal() {
+      demandModal.classList.remove("open");
+      demandModal.setAttribute("aria-hidden", "true");
+      if (!compareModal.classList.contains("open")) document.body.classList.remove("modal-open");
+      if (modalReturnFocus && typeof modalReturnFocus.focus === "function") modalReturnFocus.focus();
+    }
+
+    function formatDemandValue(value) {
+      return Number(value || 0).toLocaleString("pt-BR", { maximumFractionDigits: 2 });
+    }
+
+    function formatChangePercent(fromValue, toValue) {
+      const from = Number(fromValue || 0);
+      const to = Number(toValue || 0);
+      if (from === 0 && to === 0) return "0%";
+      if (from === 0 && to > 0) return "Novo estímulo";
+      const pct = ((to - from) / from) * 100;
+      return `${pct > 0 ? "+" : ""}${pct.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%`;
+    }
+
+    function changeClass(delta) {
+      if (delta > 0) return "change-up";
+      if (delta < 0) return "change-down";
+      return "change-flat";
+    }
+
+    function renderComparison() {
+      if (typeof refreshCustomCombos === "function") refreshCustomCombos();
+      if (!demandDatabase) {
+        document.getElementById("compareFocusChart").innerHTML = '<div class="compare-empty">A base muscular ainda não está disponível.</div>';
+        document.getElementById("compareAllGroups").innerHTML = '';
+        return;
+      }
+
+      const fromSheet = fichas.find(sheet => sheet.id === compareFrom.value);
+      const toSheet = fichas.find(sheet => sheet.id === compareTo.value);
+      if (!fromSheet || !toSheet) return;
+
+      const fromResult = calculateSheetDemand(fromSheet);
+      const toResult = calculateSheetDemand(toSheet);
+      const fromDemand = fromResult.totals;
+      const toDemand = toResult.totals;
+      const missingNames = Array.from(new Set([...fromResult.missing, ...toResult.missing]));
+      const warningHtml = missingNames.length ? `<div class="compare-warning" role="status">Comparação parcial: ${missingNames.length} exercício(s) sem coeficientes na planilha: ${missingNames.map(escapeHtml).join(", ")}.</div>` : "";
+      const focusRows = FOCUS_MUSCLES.map(muscle => ({
+        muscle,
+        from: Number(fromDemand[muscle] || 0),
+        to: Number(toDemand[muscle] || 0)
+      })).sort((a, b) => b.to - a.to || b.from - a.from);
+
+      const chartMax = Math.max(1, ...focusRows.flatMap(row => [row.from, row.to]));
+      document.getElementById("compareFocusChart").innerHTML = warningHtml + focusRows.map(row => {
+        const delta = row.to - row.from;
+        const deltaText = `${delta > 0 ? "+" : ""}${formatDemandValue(delta)}`;
+        const relativeText = formatChangePercent(row.from, row.to);
+        const deltaType = delta > 0 ? "up" : delta < 0 ? "down" : "";
+        return `
+          <div class="compare-chart-row">
+            <div class="compare-chart-head">
+              <span class="compare-chart-muscle">${escapeHtml(row.muscle)}</span>
+              <span class="delta-stack" aria-label="Mudança absoluta ${escapeHtml(deltaText)}; mudança relativa ${escapeHtml(relativeText)}">
+                <span class="delta-pill ${deltaType}"><small>Abs.</small>${escapeHtml(deltaText)}</span>
+                <span class="delta-pill ${deltaType}"><small>Rel.</small>${escapeHtml(relativeText)}</span>
+              </span>
+            </div>
+            <div class="compare-series">
+              <span class="compare-series-label">Inicial</span>
+              <span class="compare-series-track"><span class="compare-series-fill" style="display:block;width:${(row.from / chartMax) * 100}%"></span></span>
+              <span class="compare-series-value">${formatDemandValue(row.from)}</span>
+            </div>
+            <div class="compare-series final">
+              <span class="compare-series-label">Final</span>
+              <span class="compare-series-track"><span class="compare-series-fill" style="display:block;width:${(row.to / chartMax) * 100}%"></span></span>
+              <span class="compare-series-value">${formatDemandValue(row.to)}</span>
+            </div>
+          </div>`;
+      }).join("");
+
+      const allMuscles = muscleHeaders.length
+        ? muscleHeaders
+        : Array.from(new Set([...Object.keys(fromDemand), ...Object.keys(toDemand)]));
+
+      document.getElementById("compareAllGroups").innerHTML = `
+        <div class="compare-table">
+          <div class="compare-table-head">
+            <span>Grupo</span><span>Inicial</span><span>Final</span><span>Mudança</span>
+          </div>
+          ${allMuscles.map(muscle => {
+            const from = Number(fromDemand[muscle] || 0);
+            const to = Number(toDemand[muscle] || 0);
+            const delta = to - from;
+            const deltaText = `${delta > 0 ? "+" : ""}${formatDemandValue(delta)}`;
+            const relativeText = formatChangePercent(from, to);
+            return `
+              <div class="compare-table-row">
+                <span class="muscle-name" title="${escapeHtml(muscle)}">${escapeHtml(muscle)}</span>
+                <span class="compare-cell" data-label="Inicial">${formatDemandValue(from)}</span>
+                <span class="compare-cell" data-label="Final"><strong>${formatDemandValue(to)}</strong></span>
+                <span class="compare-cell ${changeClass(delta)}" data-label="Mudança">${deltaText} (${escapeHtml(relativeText)})</span>
+              </div>`;
+          }).join("")}
+        </div>`;
+    }
+
+    function populateCompareSelectors() {
+      const options = fichas.map(sheet => `<option value="${escapeHtml(sheet.id)}">${escapeHtml(sheet.name)}</option>`).join("");
+      compareFrom.innerHTML = options;
+      compareTo.innerHTML = options;
+    }
+
+    function openCompareModal() {
+      compareModalReturnFocus = document.activeElement;
+      if (compareModalReturnFocus && typeof compareModalReturnFocus.blur === "function") compareModalReturnFocus.blur();
+      const currentId = selector.value;
+      const currentIndex = Math.max(0, fichas.findIndex(sheet => sheet.id === currentId));
+      compareFrom.value = currentIndex > 0 ? fichas[currentIndex - 1].id : fichas[0].id;
+      compareTo.value = currentId;
+      if (compareFrom.value === compareTo.value && fichas.length > 1) compareTo.value = fichas[1].id;
+      renderComparison();
+      compareModal.classList.add("open");
+      compareModal.setAttribute("aria-hidden", "false");
+      document.body.classList.add("modal-open");
+      compareModalClose.focus();
+    }
+
+    function closeCompareModal() {
+      compareModal.classList.remove("open");
+      compareModal.setAttribute("aria-hidden", "true");
+      if (!demandModal.classList.contains("open")) document.body.classList.remove("modal-open");
+      if (compareModalReturnFocus && typeof compareModalReturnFocus.focus === "function") compareModalReturnFocus.focus();
+    }
+
+    function renderWorkoutSequence(sheet) {
+      const sequence = document.getElementById("workoutSequence");
+      if (!sequence) return;
+      sequence.innerHTML = sheet.workouts.map((workout, index) =>
+        `<button type="button" class="week-chip" data-workout-shortcut="${index}" aria-label="Ir para ${escapeHtml(workout.name)}">${escapeHtml(workout.name)}</button>`
+      ).join("");
+    }
+
+    function renderWorkouts(sheet) {
+      document.getElementById("workoutsContainer").innerHTML = sheet.workouts.map((workout, workoutIndex) => `
+        <section class="workout-card collapsed" id="workout-card-${workoutIndex}" data-workout-index="${workoutIndex}">
+          <header class="workout-header">
+            <button class="workout-toggle" type="button" data-workout-toggle="${workoutIndex}" aria-expanded="false" aria-controls="workout-details-${workoutIndex}" aria-label="Mostrar exercícios de ${escapeHtml(workout.name)}">
+              <span class="workout-toggle-copy">
+                <span class="eyebrow">${escapeHtml(workout.tag)}</span>
+                <h2>${escapeHtml(workout.name)}</h2>
+                <p>${escapeHtml(workout.focus)}</p>
+              </span>
+              <span class="workout-chevron" aria-hidden="true">⌄</span>
+            </button>
+            <button class="count demand-count-button" type="button" data-workout-demand-index="${workoutIndex}" aria-haspopup="dialog" aria-controls="demandModal" aria-label="Ver demanda muscular de ${escapeHtml(workout.name)}. ${workout.exercises.length} exercícios">${String(workout.exercises.length).padStart(2, "0")}</button>
+          </header>
+          <div class="workout-details" id="workout-details-${workoutIndex}" hidden>
+            <div class="column-labels">
+              <span>EXERCÍCIO</span><span>SÉRIES</span><span>REPS</span><span>RIR</span>
+            </div>
+            <div class="exercise-list">
+              ${workout.exercises.map((exercise, index) => `
+                <article class="exercise">
+                  <div class="exercise-number">${String(index + 1).padStart(2, "0")}</div>
+                  <div class="exercise-main">
+                    <h3>${escapeHtml(exercise.name)}</h3>
+                    <span class="type ${exercise.type === "Multiarticular" ? "multi" : "mono"}">${escapeHtml(exercise.type)}</span>
+                  </div>
+                  <div class="metric"><strong>${exercise.sets}</strong><span>SÉRIES</span></div>
+                  <div class="metric"><strong>${escapeHtml(exercise.reps)}</strong><span>REPS</span></div>
+                  <div class="metric"><strong>${escapeHtml(exercise.rir)}</strong><span>RIR</span></div>
+                </article>
+              `).join("")}
+            </div>
+          </div>
+        </section>
+      `).join("");
+    }
+
+    function updateWorkoutShortcutActive(activeIndex = null) {
+      document.querySelectorAll("[data-workout-shortcut]").forEach(button => {
+        const isActive = activeIndex !== null && Number(button.dataset.workoutShortcut) === Number(activeIndex);
+        button.classList.toggle("active", isActive);
+        if (isActive) button.setAttribute("aria-current", "true");
+        else button.removeAttribute("aria-current");
+      });
+    }
+
+    function setExpandedWorkout(index, { scroll = false } = {}) {
+      const targetIndex = Number(index);
+      let targetCard = null;
+
+      document.querySelectorAll(".workout-card[data-workout-index]").forEach(card => {
+        const isTarget = Number(card.dataset.workoutIndex) === targetIndex;
+        const details = card.querySelector(".workout-details");
+        const toggle = card.querySelector(".workout-toggle");
+
+        card.classList.toggle("expanded", isTarget);
+        card.classList.toggle("collapsed", !isTarget);
+        if (details) details.hidden = !isTarget;
+        if (toggle) {
+          toggle.setAttribute("aria-expanded", String(isTarget));
+          const sheet = fichas.find(item => item.id === selector.value);
+          const workout = sheet?.workouts?.[Number(card.dataset.workoutIndex)];
+          toggle.setAttribute("aria-label", `${isTarget ? "Ocultar" : "Mostrar"} exercícios de ${workout?.name || "treino"}`);
+        }
+        if (isTarget) targetCard = card;
+      });
+
+      updateWorkoutShortcutActive(targetCard ? targetIndex : null);
+
+      if (scroll && targetCard) {
+        requestAnimationFrame(() => {
+          targetCard.scrollIntoView({ behavior: "smooth", block: "start" });
+        });
+      }
+    }
+
+    function toggleWorkout(index) {
+      const card = document.querySelector(`.workout-card[data-workout-index="${Number(index)}"]`);
+      if (!card) return;
+      if (card.classList.contains("expanded")) setExpandedWorkout(-1);
+      else setExpandedWorkout(index);
+    }
+
+    function setStatus(message, isError = false) {
+      const status = document.getElementById("dataStatus");
+      status.textContent = message;
+      status.style.color = isError ? "#ffb4a8" : "#dfff2f";
+      if (!isError) lastSuccessfulStatus = message;
+    }
+
+    function storageGet(key) {
+      try { return localStorage.getItem(key); } catch (_) { return null; }
+    }
+
+    function storageSet(key, value) {
+      try { localStorage.setItem(key, value); } catch (_) {}
+    }
+
+    function storageRemove(key) {
+      try { localStorage.removeItem(key); } catch (_) {}
+    }
+
+    function loadCachedDemandDatabase(statusPrefix = "Base local carregada") {
+      const cached = storageGet(CACHE_KEY);
+      if (!cached) return false;
+
+      try {
+        const parsedCache = JSON.parse(cached);
+        demandDatabase = new Map(parsedCache.database || []);
+        muscleHeaders = Array.isArray(parsedCache.muscleHeaders) ? parsedCache.muscleHeaders : [];
+        const savedAt = storageGet(CACHE_TIME_KEY);
+        const time = savedAt
+          ? new Date(savedAt).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })
+          : "data anterior";
+        setStatus(`${statusPrefix} • ${time}`);
+        selectSheet(selector.value || storageGet(SELECTED_SHEET_KEY) || fichas[0].id);
+        return true;
+      } catch (_) {
+        storageRemove(CACHE_KEY);
+        storageRemove(CACHE_TIME_KEY);
+        demandDatabase = null;
+        muscleHeaders = [];
+        return false;
+      }
+    }
+
+    function updateConnectionStatus() {
+      const offline = navigator.onLine === false;
+      connectionStatus.textContent = offline ? "Offline • ficha disponível" : "Online • sincronização ativa";
+      pwaState.classList.toggle("offline", offline);
+    }
+
+    function isStandaloneMode() {
+      return window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+    }
+
+    function setupInstallPrompt() {
+      if (isStandaloneMode()) installButton.hidden = true;
+
+      window.addEventListener("beforeinstallprompt", event => {
+        event.preventDefault();
+        deferredInstallPrompt = event;
+        if (!isStandaloneMode()) installButton.hidden = false;
+      });
+
+      window.addEventListener("appinstalled", () => {
+        deferredInstallPrompt = null;
+        installButton.hidden = true;
+      });
+
+      installButton.addEventListener("click", async () => {
+        if (deferredInstallPrompt) {
+          deferredInstallPrompt.prompt();
+          await deferredInstallPrompt.userChoice.catch(() => null);
+          deferredInstallPrompt = null;
+          return;
+        }
+
+        const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+        if (isIOS) {
+          alert('No Safari, toque em “Compartilhar” e depois em “Adicionar à Tela de Início”.');
+        } else {
+          alert('Use o menu do navegador e escolha “Instalar app” ou “Adicionar à tela inicial”.');
+        }
+      });
+    }
+
+    function showUpdateBanner(worker) {
+      waitingServiceWorker = worker;
+      updateBanner.classList.add("show");
+    }
+
+    function registerServiceWorker() {
+      if (!("serviceWorker" in navigator)) return;
+
+      window.addEventListener("load", async () => {
+        try {
+          const registration = await navigator.serviceWorker.register("./service-worker.js");
+          if (registration.waiting) showUpdateBanner(registration.waiting);
+
+          registration.addEventListener("updatefound", () => {
+            const worker = registration.installing;
+            if (!worker) return;
+            worker.addEventListener("statechange", () => {
+              if (worker.state === "installed" && navigator.serviceWorker.controller) {
+                showUpdateBanner(worker);
+              }
+            });
+          });
+
+          navigator.serviceWorker.addEventListener("controllerchange", () => {
+            if (serviceWorkerReloading) return;
+            serviceWorkerReloading = true;
+            window.location.reload();
+          });
+        } catch (error) {
+          console.warn("Service Worker não registrado:", error);
+        }
+      });
+
+      updateButton.addEventListener("click", () => {
+        if (waitingServiceWorker) waitingServiceWorker.postMessage({ type: "SKIP_WAITING" });
+      });
+    }
+
+    function populateSelector() {
+      selector.innerHTML = fichas.map(sheet =>
+        `<option value="${escapeHtml(sheet.id)}">${escapeHtml(sheet.name)}</option>`
+      ).join("");
+    }
+
+    function renderNotes(sheet) {
+      const panel = document.getElementById("notesPanel");
+      panel.hidden = !sheet.notes?.length;
+      if (!sheet.notes?.length) { panel.innerHTML = ""; return; }
+      panel.innerHTML = `
+        <div class="notes-heading"><span class="eyebrow">Orientações complementares</span><h2>OBSERVAÇÕES DA FICHA</h2></div>
+        <div class="notes-grid">${sheet.notes.map(note => `
+          <article class="note-item"><h3>${escapeHtml(note.title)}</h3><p>${escapeHtml(note.description)}</p></article>
+        `).join("")}</div>`;
+    }
+
+    function selectSheet(id) {
+      const sheet = fichas.find(item => item.id === id);
+      if (!sheet) return;
+
+      document.getElementById("sheetTitle").textContent = sheet.name;
+      document.getElementById("sheetTime").textContent = sheet.time;
+      const sheetDescription = document.getElementById("sheetDescription");
+      sheetDescription.textContent = sheet.description || "";
+      sheetDescription.hidden = !sheet.description;
+      renderWorkoutSequence(sheet);
+      renderNotes(sheet);
+      renderWorkouts(sheet);
+
+      if (!demandDatabase) {
+        renderDemand({});
+        return;
+      }
+
+      const result = calculateSheetDemand(sheet);
+      renderDemand(result.totals);
+
+      if (result.missing.length) {
+        setStatus(
+          `Planilha carregada. ${result.missing.length} exercício(s) sem correspondência exata: ${result.missing.join("; ")}`,
+          true
+        );
+      } else if (lastSuccessfulStatus) {
+        setStatus(lastSuccessfulStatus);
+      }
+    }
+
+    function loadDemandDatabase() {
+      if (navigator.onLine === false) {
+        const restored = loadCachedDemandDatabase("Modo offline • última base salva");
+        if (!restored) {
+          demandDatabase = null;
+          renderDemand({});
+          setStatus("Modo offline. Abra uma vez com internet para salvar a base de demanda muscular.", true);
+        }
+        return;
+      }
+
+      setStatus("Atualizando dados da planilha…");
+
+      const callbackName = "xsteamReceiveDemand_" + Date.now();
+      const script = document.createElement("script");
+      let finished = false;
+
+      const timeout = setTimeout(() => {
+        if (finished) return;
+        finished = true;
+        cleanup();
+        useCacheOrShowError("Tempo limite ao carregar a planilha.");
+      }, 15000);
+
+      function cleanup() {
+        clearTimeout(timeout);
+        try { delete window[callbackName]; } catch (_) { window[callbackName] = undefined; }
+        script.remove();
+      }
+
+      function useCacheOrShowError(reason) {
+        if (loadCachedDemandDatabase("Sem atualização online • última base salva")) return;
+        demandDatabase = null;
+        renderDemand({});
+        setStatus("Não foi possível carregar a planilha e ainda não existe uma cópia offline salva.", true);
+        console.warn(reason);
+      }
+
+      window[callbackName] = function(response) {
+        if (finished) return;
+        finished = true;
+
+        try {
+          demandDatabase = buildDemandDatabaseFromGviz(response);
+          storageSet(CACHE_KEY, JSON.stringify({ database: Array.from(demandDatabase.entries()), muscleHeaders }));
+          storageSet(CACHE_TIME_KEY, new Date().toISOString());
+
+          const time = new Date().toLocaleString("pt-BR", {
+            dateStyle: "short",
+            timeStyle: "short"
+          });
+
+          setStatus(`Base atualizada pela planilha em ${time}`);
+          selectSheet(selector.value);
+        } catch (error) {
+          useCacheOrShowError(error.message);
+        } finally {
+          cleanup();
+        }
+      };
+
+      script.onerror = function() {
+        if (finished) return;
+        finished = true;
+        cleanup();
+        useCacheOrShowError("Falha ao carregar o Google Visualization.");
+      };
+
+      const params = new URLSearchParams({
+        tqx: `out:json;responseHandler:${callbackName}`,
+        _: String(Date.now())
+      });
+
+      script.src = `${DEMAND_GVIZ_URL}&${params.toString()}`;
+      script.async = true;
+      document.head.appendChild(script);
+    }
+
+    demandListButton.addEventListener("click", () => openDemandModal());
+    demandListButton.addEventListener("keydown", event => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        openDemandModal();
+      }
+    });
+
+    compareDemandButton.addEventListener("click", openCompareModal);
+    compareFrom.addEventListener("change", renderComparison);
+    compareTo.addEventListener("change", renderComparison);
+    compareModalClose.addEventListener("click", closeCompareModal);
+    compareModal.addEventListener("click", event => {
+      if (event.target === compareModal) closeCompareModal();
+    });
+
+    document.getElementById("workoutSequence").addEventListener("click", event => {
+      const shortcut = event.target.closest("[data-workout-shortcut]");
+      if (!shortcut) return;
+      setExpandedWorkout(Number(shortcut.dataset.workoutShortcut), { scroll: true });
+    });
+
+    workoutsContainer.addEventListener("click", event => {
+      const demandButton = event.target.closest("[data-workout-demand-index]");
+      if (demandButton) {
+        const sheet = fichas.find(item => item.id === selector.value);
+        const workout = sheet?.workouts?.[Number(demandButton.dataset.workoutDemandIndex)];
+        if (!workout || !demandDatabase) return;
+        const result = calculateWorkoutDemand(workout);
+        openDemandModal({
+          demand: result.totals,
+          title: `Demanda • ${workout.name}`,
+          subtitle: `${sheet.name} • ${workout.tag} • somente músculos com demanda maior que zero.`,
+          includeZero: false,
+          note: "Demanda calculada somente com os exercícios deste treino. Grupos com valor zero são ocultados."
+        });
+        return;
+      }
+
+      const toggle = event.target.closest("[data-workout-toggle]");
+      if (toggle) toggleWorkout(Number(toggle.dataset.workoutToggle));
+    });
+
+    demandModalClose.addEventListener("click", closeDemandModal);
+    demandModal.addEventListener("click", event => {
+      if (event.target === demandModal) closeDemandModal();
+    });
+    document.addEventListener("keydown", event => {
+      if (event.key !== "Escape") return;
+      if (compareModal.classList.contains("open")) closeCompareModal();
+      else if (demandModal.classList.contains("open")) closeDemandModal();
+    });
+
+    selector.addEventListener("change", event => {
+      storageSet(SELECTED_SHEET_KEY, event.target.value);
+      selectSheet(event.target.value);
+    });
+
+
+    // Premium custom dropdowns; native selects remain the controlled values.
+    const xcomboInstances = [];
+    function closeCustomCombos(except = null) {
+      xcomboInstances.forEach(instance => {
+        if (instance === except) return;
+        instance.wrapper.classList.remove("is-open");
+        instance.list.hidden = true;
+        instance.button.setAttribute("aria-expanded", "false");
+      });
+    }
+    function initCustomCombo(select) {
+      const wrapper = document.createElement("div");
+      wrapper.className = "xcombo";
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "xcombo-btn";
+      button.setAttribute("aria-haspopup", "listbox");
+      button.setAttribute("aria-expanded", "false");
+      button.setAttribute("aria-label", select.getAttribute("aria-label") || select.closest(".compare-field")?.querySelector("label")?.textContent || "Selecionar ficha");
+      button.innerHTML = '<span></span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>';
+      const list = document.createElement("div");
+      list.className = "xcombo-list";
+      list.setAttribute("role", "listbox");
+      list.hidden = true;
+      select.parentNode.insertBefore(wrapper, select);
+      wrapper.appendChild(select);
+      wrapper.appendChild(button);
+      wrapper.appendChild(list);
+      const instance = { select, wrapper, button, list };
+      function sync() {
+        button.querySelector("span").textContent = select.selectedOptions[0]?.textContent || "Selecionar";
+        list.querySelectorAll(".xcombo-option").forEach(option => {
+          const selected = option.dataset.value === select.value;
+          option.classList.toggle("is-selected", selected);
+          option.setAttribute("aria-selected", String(selected));
+        });
+      }
+      function build() {
+        list.innerHTML = "";
+        Array.from(select.options).forEach(o => {
+          const item = document.createElement("button");
+          item.type = "button";
+          item.className = "xcombo-option";
+          item.setAttribute("role", "option");
+          item.dataset.value = o.value;
+          item.textContent = o.textContent;
+          item.addEventListener("click", () => {
+            select.value = o.value;
+            select.dispatchEvent(new Event("change", { bubbles: true }));
+            sync();
+            closeCustomCombos();
+            button.focus();
+          });
+          list.appendChild(item);
+        });
+        sync();
+      }
+      button.addEventListener("click", () => {
+        const open = !wrapper.classList.contains("is-open");
+        closeCustomCombos();
+        if (open) {
+          build();
+          wrapper.classList.add("is-open");
+          list.hidden = false;
+          button.setAttribute("aria-expanded", "true");
+        }
+      });
+      button.addEventListener("keydown", event => {
+        if (event.key === "ArrowDown" || event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          if (!wrapper.classList.contains("is-open")) button.click();
+          list.querySelector(".is-selected")?.focus();
+        }
+      });
+      select.addEventListener("change", sync);
+      instance.refresh = sync;
+      xcomboInstances.push(instance);
+      return instance;
+    }
+    document.addEventListener("click", event => {
+      if (!event.target.closest(".xcombo")) closeCustomCombos();
+    });
+    document.addEventListener("keydown", event => {
+      if (event.key === "Escape") closeCustomCombos();
+    });
+    const refreshCustomCombos = () => xcomboInstances.forEach(i => i.refresh());
+    populateSelector();
+    populateCompareSelectors();
+    [selector, compareFrom, compareTo].forEach(initCustomCombo);
+    const savedSheet = storageGet(SELECTED_SHEET_KEY);
+    const initialSheet = fichas.some(sheet => sheet.id === savedSheet) ? savedSheet : fichas[0].id;
+    selector.value = initialSheet;
+    selectSheet(initialSheet);
+    refreshCustomCombos();
+
+    updateConnectionStatus();
+    setupInstallPrompt();
+    registerServiceWorker();
+
+    // Carrega a última base imediatamente e, se houver internet, atualiza em seguida.
+    loadCachedDemandDatabase("Última base salva");
+    loadDemandDatabase();
+
+    window.addEventListener("online", () => {
+      updateConnectionStatus();
+      loadDemandDatabase();
+    });
+    window.addEventListener("offline", () => {
+      updateConnectionStatus();
+      loadCachedDemandDatabase("Modo offline • última base salva");
+    });
+  </script>
+</body>
+</html>
